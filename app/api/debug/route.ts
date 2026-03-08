@@ -7,55 +7,63 @@ import {
     SupportedLanguage,
 } from "@/types";
 
-// Groq uses the OpenAI SDK — just a different base URL
-const groq = new OpenAI({
-    apiKey: process.env.GROQ_API_KEY,
-    baseURL: "https://api.groq.com/openai/v1",
-});
+// Groq uses the OpenAI SDK — lazy-initialized to avoid build-time env var errors
+let groq: OpenAI | null = null;
+
+function getGroqClient(): OpenAI {
+  if (!groq) {
+    groq = new OpenAI({
+      apiKey: process.env.GROQ_API_KEY,
+      baseURL: "https://api.groq.com/openai/v1",
+    });
+  }
+  return groq;
+}
 
 // Max code length to prevent abuse and keep token costs low
 const MAX_CODE_LENGTH = 5000;
 
 export async function POST(request: NextRequest) {
-    try {
-        // --- 1. Parse request body ---
-        const body = await request.json();
-        const { code, language, context } = body;
+  try {
+    // --- 1. Parse request body ---
+    const body = await request.json();
+    const { code, language, context } = body;
 
-        // --- 2. Validate: code must exist and be under limit ---
-        if (!code || typeof code !== "string" || code.trim().length === 0) {
-            return NextResponse.json(
-                { error: "Code is required. Paste some code to debug." },
-                { status: 400 }
-            );
-        }
+    // --- 2. Validate: code must exist and be under limit ---
+    if (!code || typeof code !== "string" || code.trim().length === 0) {
+      return NextResponse.json(
+        { error: "Code is required. Paste some code to debug." },
+        { status: 400 }
+      );
+    }
 
-        if (code.length > MAX_CODE_LENGTH) {
-            return NextResponse.json(
-                {
-                    error: `Code is too long. Max ${MAX_CODE_LENGTH} characters (yours: ${code.length}).`,
-                },
-                { status: 400 }
-            );
-        }
+    if (code.length > MAX_CODE_LENGTH) {
+      return NextResponse.json(
+        {
+          error: `Code is too long. Max ${MAX_CODE_LENGTH} characters (yours: ${code.length}).`,
+        },
+        { status: 400 }
+      );
+    }
 
-        // --- 3. Validate: language must be supported ---
-        if (
-            !language ||
-            !SUPPORTED_LANGUAGES.includes(language as SupportedLanguage)
-        ) {
-            return NextResponse.json(
-                {
-                    error: `Unsupported language. Choose one of: ${SUPPORTED_LANGUAGES.join(", ")}`,
-                },
-                { status: 400 }
-            );
-        }
+    // --- 3. Validate: language must be supported ---
+    if (
+      !language ||
+      !SUPPORTED_LANGUAGES.includes(language as SupportedLanguage)
+    ) {
+      return NextResponse.json(
+        {
+          error: `Unsupported language. Choose one of: ${SUPPORTED_LANGUAGES.join(", ")}`,
+        },
+        { status: 400 }
+      );
+    }
 
-        // --- 4. Build the prompt and call Groq ---
-        const userMessage = buildUserMessage(code, language, context);
+    // --- 4. Build the prompt and call Groq ---
+    const userMessage = buildUserMessage(code, language, context);
+    const client = getGroqClient();
 
-        const completion = await groq.chat.completions.create({
+    const completion = await client.chat.completions.create({
             model: "llama-3.3-70b-versatile",
             messages: [
                 { role: "system", content: SYSTEM_PROMPT },
