@@ -129,7 +129,7 @@ export default function CodeInput({ onSubmit, isLoading }: CodeInputProps) {
 
       {/* Helper text */}
       <p className="text-xs text-zinc-500">
-        Supports JavaScript, TypeScript, Python, Java, and C++
+        Press <kbd className="px-1.5 py-0.5 rounded bg-zinc-800 text-zinc-400 font-mono text-[10px]">Ctrl</kbd> + <kbd className="px-1.5 py-0.5 rounded bg-zinc-800 text-zinc-400 font-mono text-[10px]">Enter</kbd> to submit
       </p>
     </div>
   );
