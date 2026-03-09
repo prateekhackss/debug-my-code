@@ -5,7 +5,15 @@ import CodeInput from "@/components/CodeInput";
 import LoadingState from "@/components/LoadingState";
 import ResultCard from "@/components/ResultCard";
 import SeverityBadge from "@/components/SeverityBadge";
+import CodeEditor from "@/components/CodeEditor";
 import { DebugResponse, SupportedLanguage, Bug } from "@/types";
+
+// --- Helper: find which lines in a code block to highlight (1-indexed) ---
+function getAllLineNumbers(code: string): number[] {
+  if (!code) return [];
+  const lines = code.split("\n");
+  return lines.map((_, i) => i + 1);
+}
 
 // --- Rate Limiting Helpers ---
 const DAILY_LIMIT = 5;
@@ -66,13 +74,6 @@ function getBugCards(bug: Bug) {
       color: "orange" as const,
     },
     {
-      icon: "✅",
-      title: "The Fix",
-      content: bug.fixed_code,
-      color: "green" as const,
-      isCode: true,
-    },
-    {
       icon: "💡",
       title: "Why This Fixes It",
       content: bug.why_this_fixes_it,
@@ -92,6 +93,7 @@ export default function Home() {
   const [result, setResult] = useState<DebugResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [rateLimit, setRateLimit] = useState({ count: 0, remaining: DAILY_LIMIT, isLimited: false });
+  const [submittedLanguage, setSubmittedLanguage] = useState<SupportedLanguage>("javascript");
 
   // Check rate limit on mount
   useEffect(() => {
@@ -110,6 +112,7 @@ export default function Home() {
       setIsLoading(true);
       setResult(null);
       setError(null);
+      setSubmittedLanguage(language);
 
       try {
         const res = await fetch("/api/debug", {
@@ -224,24 +227,43 @@ export default function Home() {
                       </h3>
                     </div>
 
-                    {/* Broken code block */}
+                    {/* Side-by-side diff: Broken vs Fixed */}
                     <div
-                      className="animate-[fadeSlideIn_0.4s_ease-out_forwards] opacity-0"
+                      className="grid grid-cols-1 lg:grid-cols-2 gap-3 animate-[fadeSlideIn_0.4s_ease-out_forwards] opacity-0"
                       style={{ animationDelay: `${(bugIndex * 7 + 2) * 200}ms` }}
                     >
-                      <ResultCard
-                        icon="🐛"
-                        title="Broken Code"
-                        color="red"
-                        content={
-                          <pre className="font-mono text-xs bg-zinc-950 p-3 rounded-lg overflow-x-auto whitespace-pre-wrap">
-                            {bug.broken_code}
-                          </pre>
-                        }
-                      />
+                      {/* Broken code */}
+                      <div>
+                        <div className="flex items-center gap-2 mb-2 text-xs font-bold text-red-400 uppercase tracking-wide">
+                          <span>🐛</span> Broken Code
+                        </div>
+                        <CodeEditor
+                          value={bug.broken_code}
+                          language={submittedLanguage}
+                          readOnly
+                          highlightLines={getAllLineNumbers(bug.broken_code)}
+                          highlightColor="red"
+                          minHeight={80}
+                        />
+                      </div>
+
+                      {/* Fixed code */}
+                      <div>
+                        <div className="flex items-center gap-2 mb-2 text-xs font-bold text-green-400 uppercase tracking-wide">
+                          <span>✅</span> Fixed Code
+                        </div>
+                        <CodeEditor
+                          value={bug.fixed_code}
+                          language={submittedLanguage}
+                          readOnly
+                          highlightLines={getAllLineNumbers(bug.fixed_code)}
+                          highlightColor="green"
+                          minHeight={80}
+                        />
+                      </div>
                     </div>
 
-                    {/* Other bug cards */}
+                    {/* Other bug cards (non-code fields) */}
                     {getBugCards(bug).map((card, cardIndex) => (
                       <div
                         key={card.title}
@@ -254,15 +276,7 @@ export default function Home() {
                           icon={card.icon}
                           title={card.title}
                           color={card.color}
-                          content={
-                            card.isCode ? (
-                              <pre className="font-mono text-xs bg-zinc-950 p-3 rounded-lg overflow-x-auto whitespace-pre-wrap">
-                                {card.content}
-                              </pre>
-                            ) : (
-                              <p>{card.content}</p>
-                            )
-                          }
+                          content={<p>{card.content}</p>}
                         />
                       </div>
                     ))}

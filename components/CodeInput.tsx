@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { SUPPORTED_LANGUAGES, SupportedLanguage } from "@/types";
+import CodeEditor from "@/components/CodeEditor";
 
 // Display names for the language dropdown
 const LANGUAGE_LABELS: Record<SupportedLanguage, string> = {
@@ -27,44 +28,26 @@ export default function CodeInput({ onSubmit, isLoading }: CodeInputProps) {
     onSubmit(code, language, context);
   };
 
-  // Handle Ctrl+Enter to submit
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) {
-      handleSubmit();
-    }
-  };
-
   const charCount = code.length;
   const isOverLimit = charCount > 5000;
   const isEmpty = code.trim().length === 0;
 
   return (
     <div className="w-full space-y-4">
-      {/* Code Textarea */}
+      {/* Code Editor */}
       <div className="relative">
-        <textarea
-          id="code-input"
+        <CodeEditor
           value={code}
-          onChange={(e) => setCode(e.target.value)}
-          onKeyDown={handleKeyDown}
+          language={language}
+          onChange={setCode}
+          readOnly={isLoading}
+          minHeight={200}
           placeholder="Paste your broken code here..."
-          disabled={isLoading}
-          className={`
-            w-full min-h-[200px] p-4 rounded-xl resize-y
-            font-mono text-sm leading-relaxed
-            bg-zinc-900 text-zinc-100
-            border transition-colors duration-200
-            placeholder:text-zinc-500
-            focus:outline-none focus:ring-2 focus:ring-orange-500/50 focus:border-orange-500
-            disabled:opacity-50 disabled:cursor-not-allowed
-            ${isOverLimit ? "border-red-500" : "border-zinc-700 hover:border-zinc-600"}
-          `}
-          spellCheck={false}
         />
 
         {/* Character count */}
         <div
-          className={`absolute bottom-3 right-3 text-xs font-mono ${
+          className={`absolute bottom-3 right-3 text-xs font-mono z-10 px-1.5 py-0.5 rounded bg-zinc-900/80 ${
             isOverLimit ? "text-red-400" : "text-zinc-500"
           }`}
         >
@@ -146,7 +129,7 @@ export default function CodeInput({ onSubmit, isLoading }: CodeInputProps) {
 
       {/* Helper text */}
       <p className="text-xs text-zinc-500">
-        Press <kbd className="px-1.5 py-0.5 rounded bg-zinc-800 border border-zinc-700 text-zinc-400 font-mono text-[10px]">Ctrl</kbd> + <kbd className="px-1.5 py-0.5 rounded bg-zinc-800 border border-zinc-700 text-zinc-400 font-mono text-[10px]">Enter</kbd> to submit
+        Supports JavaScript, TypeScript, Python, Java, and C++
       </p>
     </div>
   );
