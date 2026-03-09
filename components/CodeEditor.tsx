@@ -106,13 +106,15 @@ export default function CodeEditor({
   const viewRef = useRef<EditorView | null>(null);
   const languageCompartment = useRef(new Compartment());
   const highlightCompartment = useRef(new Compartment());
+  const readOnlyCompartment = useRef(new Compartment());
+  const editableCompartment = useRef(new Compartment());
   const [isReady, setIsReady] = useState(false);
 
   // Stable onChange ref to avoid recreating the editor
   const onChangeRef = useRef(onChange);
   onChangeRef.current = onChange;
 
-  // Initialize editor
+  // Initialize editor — runs ONCE (no readOnly in deps)
   useEffect(() => {
     if (!containerRef.current) return;
 
@@ -126,7 +128,7 @@ export default function CodeEditor({
       "&": {
         fontSize: "13px",
         minHeight: `${minHeight}px`,
-        backgroundColor: "#18181b", // zinc-900
+        backgroundColor: "#18181b",
         borderRadius: "12px",
       },
       "&.cm-focused": {
@@ -151,7 +153,7 @@ export default function CodeEditor({
         color: "#a1a1aa",
       },
       ".cm-activeLine": {
-        backgroundColor: readOnly ? "transparent" : "#27272a40",
+        backgroundColor: "#27272a40",
       },
       ".cm-cursor": {
         borderLeftColor: "#f97316",
@@ -159,7 +161,6 @@ export default function CodeEditor({
       ".cm-selectionBackground": {
         backgroundColor: "#f9731630 !important",
       },
-      // Highlighted line backgrounds
       ".cm-highlighted-red": {
         backgroundColor: "#ef444420",
         borderLeft: "3px solid #ef4444",
@@ -170,7 +171,6 @@ export default function CodeEditor({
         borderLeft: "3px solid #22c55e",
         paddingLeft: "8px",
       },
-      // Placeholder
       ".cm-placeholder": {
         color: "#71717a",
         fontStyle: "italic",
@@ -193,17 +193,14 @@ export default function CodeEditor({
       highlightCompartment.current.of(
         createLineHighlightPlugin(highlightLines, highlightColor)
       ),
+      readOnlyCompartment.current.of(EditorState.readOnly.of(readOnly)),
+      editableCompartment.current.of(EditorView.editable.of(!readOnly)),
       updateListener,
       EditorView.lineWrapping,
     ];
 
     if (placeholder) {
       extensions.push(cmPlaceholder(placeholder));
-    }
-
-    if (readOnly) {
-      extensions.push(EditorState.readOnly.of(true));
-      extensions.push(EditorView.editable.of(false));
     }
 
     const state = EditorState.create({
@@ -222,9 +219,10 @@ export default function CodeEditor({
     return () => {
       view.destroy();
       viewRef.current = null;
+      setIsReady(false);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [readOnly, minHeight]);
+  }, [minHeight]);
 
   // Sync external value changes (for read-only views)
   useEffect(() => {
@@ -238,6 +236,18 @@ export default function CodeEditor({
       });
     }
   }, [value, isReady]);
+
+  // Reconfigure readOnly/editable without recreating the editor
+  useEffect(() => {
+    if (!viewRef.current || !isReady) return;
+
+    viewRef.current.dispatch({
+      effects: [
+        readOnlyCompartment.current.reconfigure(EditorState.readOnly.of(readOnly)),
+        editableCompartment.current.reconfigure(EditorView.editable.of(!readOnly)),
+      ],
+    });
+  }, [readOnly, isReady]);
 
   // Dynamic language switching
   useEffect(() => {
