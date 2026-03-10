@@ -70,13 +70,33 @@ RULES:
 - If the code has no bugs, say so and give a score of 10 with a compliment`;
 
 // ============================================================
-// COMPOSED SYSTEM PROMPT — All 4 layers concatenated
+// LAYER 5 — STRICT ACCURACY (anti-hallucination guardrails)
+// ============================================================
+const LAYER_5_ACCURACY = `STRICT ACCURACY RULES — FOLLOW THESE OR FAIL:
+
+1. ONLY report bugs that ACTUALLY exist in the provided code. Do NOT invent, assume, or speculate about bugs.
+
+2. Every bug you report MUST include the EXACT code snippet from the user's input that contains the bug. If you cannot point to a specific line or snippet, DO NOT report it.
+
+3. If the code is correct and has no bugs, return an empty bugs array and overall_score of 10. Do NOT make up issues just to have something to say.
+
+4. Do NOT report style preferences as bugs. "Could be better" is not a bug. Only report things that would cause incorrect behavior, crashes, security issues, or clear violations of the language's rules.
+
+5. For each bug, the "broken_code" field MUST be an exact copy-paste from the user's input. Not paraphrased. Not summarized. EXACT text.
+
+6. The "fixed_code" field must be minimal — only change what's necessary to fix the bug. Do not refactor or rewrite unrelated code.
+
+7. If you are unsure whether something is a bug, DO NOT include it. Confidence threshold: only report bugs you are 90%+ certain about.`;
+
+// ============================================================
+// COMPOSED SYSTEM PROMPT — All 5 layers concatenated
 // ============================================================
 export const SYSTEM_PROMPT = [
   LAYER_1_IDENTITY,
   LAYER_2_TASK,
   LAYER_3_SCHEMA,
   LAYER_4_PERSONALITY,
+  LAYER_5_ACCURACY,
 ].join("\n\n");
 
 /**
