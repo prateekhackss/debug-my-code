@@ -205,156 +205,178 @@ export default function Home() {
 
               const healthColor =
                 healthScore >= 8 ? "text-green-400" :
-                healthScore >= 5 ? "text-yellow-400" :
-                healthScore >= 3 ? "text-orange-400" : "text-red-400";
+                  healthScore >= 5 ? "text-yellow-400" :
+                    healthScore >= 3 ? "text-orange-400" : "text-red-400";
 
               const healthLabel =
                 healthScore >= 8 ? "Your code is solid" :
-                healthScore >= 5 ? "Needs work" :
-                healthScore >= 3 ? "Concerning" : "Start over";
+                  healthScore >= 5 ? "Needs work" :
+                    healthScore >= 3 ? "Concerning" : "Start over";
 
               const healthBg =
                 healthScore >= 8 ? "bg-green-500/10 border-green-500/30" :
-                healthScore >= 5 ? "bg-yellow-500/10 border-yellow-500/30" :
-                healthScore >= 3 ? "bg-orange-500/10 border-orange-500/30" : "bg-red-500/10 border-red-500/30";
+                  healthScore >= 5 ? "bg-yellow-500/10 border-yellow-500/30" :
+                    healthScore >= 3 ? "bg-orange-500/10 border-orange-500/30" : "bg-red-500/10 border-red-500/30";
 
               // --- Bug counter ---
               const bugCounterIcon =
                 bugCount === 0 ? "✅" :
-                bugCount <= 2 ? "⚠️" :
-                bugCount <= 5 ? "🔥" : "💀";
+                  bugCount <= 2 ? "⚠️" :
+                    bugCount <= 5 ? "🔥" : "💀";
 
               const bugCounterText =
                 bugCount === 0 ? "Clean code!" :
-                bugCount <= 2 ? `Found ${bugCount} bug${bugCount > 1 ? "s" : ""}` :
-                bugCount <= 5 ? `Found ${bugCount} bugs` :
-                `Found ${bugCount} bugs — we need to talk`;
+                  bugCount <= 2 ? `Found ${bugCount} bug${bugCount > 1 ? "s" : ""}` :
+                    bugCount <= 5 ? `Found ${bugCount} bugs` :
+                      `Found ${bugCount} bugs — we need to talk`;
 
               const bugCounterColor =
                 bugCount === 0 ? "text-green-400" :
-                bugCount <= 2 ? "text-yellow-400" :
-                bugCount <= 5 ? "text-orange-400" : "text-red-400";
+                  bugCount <= 2 ? "text-yellow-400" :
+                    bugCount <= 5 ? "text-orange-400" : "text-red-400";
 
               return (
-              <div className="mt-10 space-y-8">
-                {/* Code Health Score */}
-                <div
-                  className={`p-6 rounded-xl border animate-[fadeSlideIn_0.4s_ease-out_forwards] opacity-0 ${healthBg}`}
-                >
-                  <div className="flex flex-col sm:flex-row items-center gap-5">
-                    {/* Big score */}
-                    <div className="text-center">
-                      <span className={`text-5xl font-black ${healthColor}`}>
-                        {healthScore}
-                      </span>
-                      <span className="text-2xl text-zinc-500 font-light">/10</span>
-                      <p className={`text-xs font-semibold uppercase tracking-wider mt-1 ${healthColor}`}>
-                        {healthLabel}
-                      </p>
-                    </div>
+                <div className="mt-10 space-y-8">
+                  {/* Code Health Score */}
+                  <div
+                    className={`p-6 rounded-xl border animate-[fadeSlideIn_0.4s_ease-out_forwards] opacity-0 ${healthBg}`}
+                  >
+                    <div className="flex flex-col sm:flex-row items-center gap-5">
+                      {/* Big score */}
+                      <div className="text-center">
+                        <span className={`text-5xl font-black ${healthColor}`}>
+                          {healthScore}
+                        </span>
+                        <span className="text-2xl text-zinc-500 font-light">/10</span>
+                        <p className={`text-xs font-semibold uppercase tracking-wider mt-1 ${healthColor}`}>
+                          {healthLabel}
+                        </p>
+                      </div>
 
-                    {/* Summary + bug counter */}
-                    <div className="flex-1 text-center sm:text-left">
-                      <h2 className="text-lg font-bold text-zinc-100">
-                        Code Health Score
-                      </h2>
-                      <p className="text-zinc-400 text-sm mt-1">
-                        {result.overall_summary}
-                      </p>
-                      <p className={`text-sm font-bold mt-2 ${bugCounterColor}`}>
-                        {bugCounterIcon} {bugCounterText}
-                      </p>
+                      {/* Summary + bug counter */}
+                      <div className="flex-1 text-center sm:text-left">
+                        <h2 className="text-lg font-bold text-zinc-100">
+                          Code Health Score
+                        </h2>
+                        <p className="text-zinc-400 text-sm mt-1">
+                          {result.overall_summary}
+                        </p>
+                        <p className={`text-sm font-bold mt-2 ${bugCounterColor}`}>
+                          {bugCounterIcon} {bugCounterText}
+                        </p>
+                      </div>
                     </div>
                   </div>
-                </div>
 
-                {/* Bugs */}
-                {result.bugs.map((bug, bugIndex) => (
-                  <div key={bug.id} className="space-y-3">
-                    {/* Bug header */}
-                    <div
-                      className="flex items-center gap-3 animate-[fadeSlideIn_0.4s_ease-out_forwards] opacity-0"
-                      style={{ animationDelay: `${(bugIndex * 7 + 1) * 200}ms` }}
-                    >
-                      <SeverityBadge score={bug.severity} compact />
-                      <h3 className="text-base font-bold text-zinc-200">
-                        Bug #{bug.id}: {bug.title}
-                      </h3>
-                    </div>
+                  {/* Bugs */}
+                  {result.bugs.map((bug, bugIndex) => {
+                    // Each bug gets: header (1 step) + diff (1 step) + cards (5 steps) = 7 steps
+                    // Health Score takes step 0, so bugs start at step 1
+                    const bugBaseStep = 1 + bugIndex * 7;
 
-                    {/* Side-by-side diff: Broken vs Fixed */}
-                    <div
-                      className="grid grid-cols-1 lg:grid-cols-2 gap-3 animate-[fadeSlideIn_0.4s_ease-out_forwards] opacity-0"
-                      style={{ animationDelay: `${(bugIndex * 7 + 2) * 200}ms` }}
-                    >
-                      {/* Broken code */}
-                      <div>
-                        <div className="flex items-center gap-2 mb-2 text-xs font-bold text-red-400 uppercase tracking-wide">
-                          <span>🐛</span> Broken Code
+                    return (
+                      <div key={bug.id} className="space-y-3">
+                        {/* Bug header */}
+                        <div
+                          className="flex items-center gap-3 animate-[fadeSlideIn_0.5s_ease-out_forwards] opacity-0"
+                          style={{ animationDelay: `${bugBaseStep * 500}ms` }}
+                        >
+                          <SeverityBadge score={bug.severity} compact />
+                          <h3 className="text-base font-bold text-zinc-200">
+                            Bug #{bug.id}: {bug.title}
+                          </h3>
                         </div>
-                        <CodeEditor
-                          value={bug.broken_code}
-                          language={submittedLanguage}
-                          readOnly
-                          highlightLines={getAllLineNumbers(bug.broken_code)}
-                          highlightColor="red"
-                          minHeight={80}
-                        />
-                      </div>
 
-                      {/* Fixed code */}
-                      <div>
-                        <div className="flex items-center gap-2 mb-2 text-xs font-bold text-green-400 uppercase tracking-wide">
-                          <span>✅</span> Fixed Code
+                        {/* Side-by-side diff: Broken vs Fixed */}
+                        <div
+                          className="grid grid-cols-1 lg:grid-cols-2 gap-3 animate-[fadeSlideIn_0.5s_ease-out_forwards] opacity-0"
+                          style={{ animationDelay: `${(bugBaseStep + 1) * 500}ms` }}
+                        >
+                          {/* Broken code */}
+                          <div>
+                            <div className="flex items-center gap-2 mb-2 text-xs font-bold text-red-400 uppercase tracking-wide">
+                              <span>🐛</span> Broken Code
+                            </div>
+                            <CodeEditor
+                              value={bug.broken_code}
+                              language={submittedLanguage}
+                              readOnly
+                              highlightLines={getAllLineNumbers(bug.broken_code)}
+                              highlightColor="red"
+                              minHeight={80}
+                            />
+                          </div>
+
+                          {/* Fixed code */}
+                          <div>
+                            <div className="flex items-center gap-2 mb-2 text-xs font-bold text-green-400 uppercase tracking-wide">
+                              <span>✅</span> Fixed Code
+                            </div>
+                            <CodeEditor
+                              value={bug.fixed_code}
+                              language={submittedLanguage}
+                              readOnly
+                              highlightLines={getAllLineNumbers(bug.fixed_code)}
+                              highlightColor="green"
+                              minHeight={80}
+                            />
+                          </div>
                         </div>
-                        <CodeEditor
-                          value={bug.fixed_code}
-                          language={submittedLanguage}
-                          readOnly
-                          highlightLines={getAllLineNumbers(bug.fixed_code)}
-                          highlightColor="green"
-                          minHeight={80}
-                        />
-                      </div>
-                    </div>
 
-                    {/* Other bug cards (non-code fields) */}
-                    {getBugCards(bug).map((card, cardIndex) => (
-                      <div
-                        key={card.title}
-                        className="animate-[fadeSlideIn_0.4s_ease-out_forwards] opacity-0"
-                        style={{
-                          animationDelay: `${(bugIndex * 7 + cardIndex + 3) * 200}ms`,
-                        }}
-                      >
-                        <ResultCard
-                          icon={card.icon}
-                          title={card.title}
-                          color={card.color}
-                          content={<p>{card.content}</p>}
-                        />
+                        {/* Other bug cards (non-code fields) */}
+                        {getBugCards(bug).map((card, cardIndex) => (
+                          <div
+                            key={card.title}
+                            className="animate-[fadeSlideIn_0.5s_ease-out_forwards] opacity-0"
+                            style={{
+                              animationDelay: `${(bugBaseStep + 2 + cardIndex) * 500}ms`,
+                            }}
+                          >
+                            <ResultCard
+                              icon={card.icon}
+                              title={card.title}
+                              color={card.color}
+                              content={<p>{card.content}</p>}
+                            />
+                          </div>
+                        ))}
                       </div>
-                    ))}
-                  </div>
-                ))}
+                    );
+                  })}
 
-                {/* Roast Card */}
-                <div
-                  className="animate-[fadeSlideIn_0.4s_ease-out_forwards] opacity-0"
-                  style={{
-                    animationDelay: `${(result.bugs.length * 7 + 3) * 200}ms`,
-                  }}
-                >
-                  <ResultCard
-                    icon="🔥"
-                    title="The Roast"
-                    color="purple"
-                    content={
-                      <p className="text-base italic">&ldquo;{result.roast}&rdquo;</p>
-                    }
-                  />
+                  {/* Roast Card — appears last */}
+                  {(() => {
+                    const roastStep = 1 + result.bugs.length * 7;
+                    const totalRevealMs = (roastStep + 1) * 500;
+                    return (
+                      <>
+                        <div
+                          className="animate-[fadeSlideIn_0.5s_ease-out_forwards] opacity-0"
+                          style={{ animationDelay: `${roastStep * 500}ms` }}
+                        >
+                          <ResultCard
+                            icon="🔥"
+                            title="The Roast"
+                            color="purple"
+                            content={
+                              <p className="text-base italic">&ldquo;{result.roast}&rdquo;</p>
+                            }
+                          />
+                        </div>
+
+                        {/* Blinking typing cursor — disappears when last card reveals */}
+                        <div
+                          className="flex justify-center"
+                          style={{
+                            animation: `blinkCursor 0.5s step-end infinite, fadeSlideIn 0.3s ease-out ${totalRevealMs}ms reverse forwards`,
+                          }}
+                        >
+                          <span className="text-orange-500 text-2xl font-light select-none">|</span>
+                        </div>
+                      </>
+                    );
+                  })()}
                 </div>
-              </div>
               );
             })()}
           </>
