@@ -196,20 +196,75 @@ export default function Home() {
             )}
 
             {/* Results */}
-            {result && !isLoading && (
+            {result && !isLoading && (() => {
+              // --- Code Health Score ---
+              const bugCount = result.bugs.length;
+              const healthScore = bugCount === 0
+                ? 10
+                : Math.max(1, Math.round(10 - result.bugs.reduce((sum, b) => sum + b.severity, 0) / bugCount));
+
+              const healthColor =
+                healthScore >= 8 ? "text-green-400" :
+                healthScore >= 5 ? "text-yellow-400" :
+                healthScore >= 3 ? "text-orange-400" : "text-red-400";
+
+              const healthLabel =
+                healthScore >= 8 ? "Your code is solid" :
+                healthScore >= 5 ? "Needs work" :
+                healthScore >= 3 ? "Concerning" : "Start over";
+
+              const healthBg =
+                healthScore >= 8 ? "bg-green-500/10 border-green-500/30" :
+                healthScore >= 5 ? "bg-yellow-500/10 border-yellow-500/30" :
+                healthScore >= 3 ? "bg-orange-500/10 border-orange-500/30" : "bg-red-500/10 border-red-500/30";
+
+              // --- Bug counter ---
+              const bugCounterIcon =
+                bugCount === 0 ? "✅" :
+                bugCount <= 2 ? "⚠️" :
+                bugCount <= 5 ? "🔥" : "💀";
+
+              const bugCounterText =
+                bugCount === 0 ? "Clean code!" :
+                bugCount <= 2 ? `Found ${bugCount} bug${bugCount > 1 ? "s" : ""}` :
+                bugCount <= 5 ? `Found ${bugCount} bugs` :
+                `Found ${bugCount} bugs — we need to talk`;
+
+              const bugCounterColor =
+                bugCount === 0 ? "text-green-400" :
+                bugCount <= 2 ? "text-yellow-400" :
+                bugCount <= 5 ? "text-orange-400" : "text-red-400";
+
+              return (
               <div className="mt-10 space-y-8">
-                {/* Overall Summary Header */}
+                {/* Code Health Score */}
                 <div
-                  className="flex flex-col sm:flex-row items-start sm:items-center gap-4 p-5 rounded-xl bg-zinc-900 border border-zinc-800 animate-[fadeSlideIn_0.4s_ease-out_forwards] opacity-0"
+                  className={`p-6 rounded-xl border animate-[fadeSlideIn_0.4s_ease-out_forwards] opacity-0 ${healthBg}`}
                 >
-                  <SeverityBadge score={result.overall_score} />
-                  <div className="flex-1">
-                    <h2 className="text-lg font-bold text-zinc-100">
-                      Overall Verdict
-                    </h2>
-                    <p className="text-zinc-400 text-sm mt-1">
-                      {result.overall_summary}
-                    </p>
+                  <div className="flex flex-col sm:flex-row items-center gap-5">
+                    {/* Big score */}
+                    <div className="text-center">
+                      <span className={`text-5xl font-black ${healthColor}`}>
+                        {healthScore}
+                      </span>
+                      <span className="text-2xl text-zinc-500 font-light">/10</span>
+                      <p className={`text-xs font-semibold uppercase tracking-wider mt-1 ${healthColor}`}>
+                        {healthLabel}
+                      </p>
+                    </div>
+
+                    {/* Summary + bug counter */}
+                    <div className="flex-1 text-center sm:text-left">
+                      <h2 className="text-lg font-bold text-zinc-100">
+                        Code Health Score
+                      </h2>
+                      <p className="text-zinc-400 text-sm mt-1">
+                        {result.overall_summary}
+                      </p>
+                      <p className={`text-sm font-bold mt-2 ${bugCounterColor}`}>
+                        {bugCounterIcon} {bugCounterText}
+                      </p>
+                    </div>
                   </div>
                 </div>
 
@@ -300,7 +355,8 @@ export default function Home() {
                   />
                 </div>
               </div>
-            )}
+              );
+            })()}
           </>
         )}
 

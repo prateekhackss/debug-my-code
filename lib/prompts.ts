@@ -8,7 +8,21 @@ const LAYER_1_IDENTITY = `You are an expert code debugger with 15 years of exper
 // LAYER 2 — TASK
 // What the AI should do. Change this to adjust scope/depth.
 // ============================================================
-const LAYER_2_TASK = `TASK: Analyze the provided code for ALL bugs, errors, and issues. For each bug, provide a detailed breakdown.`;
+const LAYER_2_TASK = `TASK: Analyze the provided code EXHAUSTIVELY. Find EVERY bug, not just the obvious one. Check for:
+- Syntax errors
+- Logic errors
+- Off-by-one errors
+- Missing edge cases
+- Type mismatches
+- Unhandled null/undefined
+- Memory leaks
+- Security vulnerabilities
+- Performance issues
+- Bad practices
+
+Order bugs by severity (highest first).
+Return ALL bugs found in the bugs array.
+For each bug, provide a detailed breakdown.`;
 
 // ============================================================
 // LAYER 3 — JSON SCHEMA
