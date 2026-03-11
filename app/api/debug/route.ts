@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import OpenAI from "openai";
 import { SYSTEM_PROMPT, buildUserMessage } from "@/lib/prompts";
+import { validateBugs } from "@/lib/validateBugs";
+import { verifyBugs } from "@/lib/verifyBugs";
 import {
   DebugResponse,
   SUPPORTED_LANGUAGES,
@@ -116,7 +118,38 @@ export async function POST(request: NextRequest) {
       severity: Math.max(1, Math.min(10, Math.round(bug.severity))),
     }));
 
-    // --- 7. Return structured response ---
+    // --- 7. Two-pass verification pipeline ---
+    const pass1Count = parsed.bugs.length;
+
+    // Pass 0: Deterministic — drop bugs whose broken_code isn't in the original
+    parsed.bugs = validateBugs(code, parsed.bugs);
+    const postValidateCount = parsed.bugs.length;
+
+    // Pass 2: AI self-critique — verify remaining bugs are real
+    if (parsed.bugs.length > 0) {
+      parsed.bugs = await verifyBugs(client, code, parsed.bugs);
+    }
+    const finalCount = parsed.bugs.length;
+
+    // Re-index bug IDs after filtering
+    parsed.bugs = parsed.bugs.map((bug, index) => ({
+      ...bug,
+      id: index + 1,
+    }));
+
+    // Recalculate overall_score based on verified bugs
+    if (parsed.bugs.length === 0) {
+      parsed.overall_score = 10;
+      if (pass1Count > 0) {
+        parsed.overall_summary = "Code looks clean — no real bugs found after verification.";
+      }
+    }
+
+    console.log(
+      `[/api/debug] Pipeline: ${pass1Count} found → ${postValidateCount} after string-match → ${finalCount} after AI verify`
+    );
+
+    // --- 8. Return verified response ---
     return NextResponse.json(parsed, { status: 200 });
   } catch (error: unknown) {
     console.error("[/api/debug] Error:", error);
