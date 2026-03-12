@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import OpenAI from "openai";
+import crypto from "crypto";
 import { SYSTEM_PROMPT, buildUserMessage } from "@/lib/prompts";
 import { validateBugs } from "@/lib/validateBugs";
 import { verifyBugs } from "@/lib/verifyBugs";
@@ -8,6 +9,9 @@ import {
   SUPPORTED_LANGUAGES,
   SupportedLanguage,
 } from "@/types";
+
+// Fix 1: Force Next.js to treat this route as fully dynamic (no caching)
+export const dynamic = "force-dynamic";
 
 // Groq uses the OpenAI SDK — lazy-initialized to avoid build-time env var errors
 let groq: OpenAI | null = null;
@@ -65,14 +69,17 @@ export async function POST(request: NextRequest) {
     const userMessage = buildUserMessage(code, language, context);
     const client = getGroqClient();
 
+    // Fix 3: Unique nonce per request — busts any upstream caching
+    const nonce = crypto.randomBytes(8).toString("hex");
+
     const completion = await client.chat.completions.create({
       model: "llama-3.3-70b-versatile",
       messages: [
         { role: "system", content: SYSTEM_PROMPT },
-        { role: "user", content: userMessage },
+        { role: "user", content: `${userMessage}\n\n[request_id: ${nonce}]` },
       ],
       response_format: { type: "json_object" },
-      temperature: 0.2,
+      temperature: 0.3,  // Fix 4: Slightly higher for more varied analysis
       top_p: 0.9,
       max_tokens: 2048,
     });
